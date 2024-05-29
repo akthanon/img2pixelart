@@ -196,7 +196,7 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         original_image = Image.open(input_path)
         denoised_image = denoise_image(original_image)
         
-        if palette_name!="original":
+        if palette_name=="nes" or len(palette)<32:
             contrast_image = enhance_contrast(denoised_image)
             small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size)
         else:
