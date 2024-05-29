@@ -28,6 +28,8 @@ Carpeta de Salida: Especifica la carpeta donde se guardarán las imágenes proce
 
 Paleta de Colores: Elige una paleta de colores para la conversión.
 
+Indexar Colores: Puedes clusterizar tus imagenes indicando el número de colores que quieras (opción por defecto).
+
 Factor de Escala / Tamaño de la Imagen: Decide si quieres ajustar el tamaño de las imágenes resultantes mediante el factor de escala o especificando directamente el tamaño de la imagen.
 #
 # img2pixelart CONSOLA DE COMANDOS
@@ -56,6 +58,7 @@ El script acepta las siguientes opciones de línea de comandos:
 - `-d, --input_folder`: Nombre del directorio de entrada que contiene las imágenes.
 - `-o, --output_folder`: Nombre del directorio de salida donde se guardarán las imágenes convertidas.
 - `-i, --input_image`: Nombre del archivo de imagen de entrada.
+- `-n, --clusters_number`: Numero de clusters para indexar la imagen.
 
 ### Ejemplos de Uso
 
