@@ -183,8 +183,10 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
     if palette_image_path:
         palette_image = Image.open(palette_image_path)
         palette = extract_palette(palette_image)
+        len_palette = len(palette)
     else:
         palette = None
+        len_palette = 0
     
     for filename in os.listdir(input_folder):
         if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -195,7 +197,7 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
             original_image = Image.open(input_path)
             denoised_image = denoise_image(original_image)
 
-            if palette_name=="nes" or len(palette)<32:
+            if palette_name=="nes" or len_palette<32:
                 contrast_image = enhance_contrast(denoised_image)
                 small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
             else:
@@ -225,8 +227,11 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
     if palette_image_path:
         palette_image = Image.open(palette_image_path)
         palette = extract_palette(palette_image)
+        len_palette = len(palette)
     else:
         palette = None
+        len_palette = 0
+        
     if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
         input_path = os.path.join(input_folder, filename)
         name, ext = os.path.splitext(os.path.basename(filename))
@@ -235,7 +240,7 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         original_image = Image.open(input_path)
         denoised_image = denoise_image(original_image)
         
-        if palette_name=="nes" or len(palette)<32:
+        if palette_name=="nes" or len_palette<32:
             contrast_image = enhance_contrast(denoised_image)
             small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
         else:
