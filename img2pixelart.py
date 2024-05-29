@@ -6,6 +6,42 @@ import argparse
 from sklearn.cluster import KMeans
 from scipy.spatial import KDTree
 
+def bayer_dithering(image,intensity):
+
+    # Matriz de Bayer 4x4
+    bayer_matrix = np.array([
+        [ 0,  8,  2, 10],
+        [12,  4, 14,  6],
+        [ 3, 11,  1,  9],
+        [15,  7, 13,  5]
+    ])
+
+    # Ampliar la matriz de Bayer para que tenga un rango de 0 a 255
+    bayer_matrix = (bayer_matrix / 16.0) * 255
+
+    pixels = np.array(image, dtype=np.float32)
+
+    # Obtener las dimensiones de la imagen
+    height, width, _ = pixels.shape
+
+    # Aplicar el Bayer dithering a cada canal de color por separado
+    for y in range(height):
+        for x in range(width):
+            for c in range(3):  # Para cada canal (R, G, B)
+                threshold = bayer_matrix[y % 4, x % 4]
+                original_value = pixels[y, x, c]
+                dithered_value = 255 if original_value > threshold else 0
+                # Interpolar entre el valor original y el valor dithered
+                pixels[y, x, c] = (1 - intensity) * original_value + intensity * dithered_value
+
+    # Convertir de nuevo a entero sin signo de 8 bits
+    pixels = np.clip(pixels, 0, 255).astype(np.uint8)
+
+    # Guardar la imagen dithered
+    dithered_image = Image.fromarray(pixels)
+
+    return dithered_image
+
 def denoise_image(img):
     img_np = np.array(img.convert('RGBA'))
     rgb_np = img_np[..., :3]
@@ -68,7 +104,7 @@ def indexar_colores(image, n_clusters):
 
     return clustered_image
 
-def reduce_image(image, scale_factor=None, image_size=None):
+def reduce_image(image, scale_factor=None, image_size=None,intensity=0.1):
     img = np.array(image)
     original_height, original_width = img.shape[:2]
 
@@ -89,6 +125,9 @@ def reduce_image(image, scale_factor=None, image_size=None):
     # Usar cv2.INTER_NEAREST para reducir la imagen y preservar detalles
     small_img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
     small_image = Image.fromarray(small_img)
+
+    # Ejemplo de uso
+    small_image = bayer_dithering(small_image,intensity=intensity)
     return small_image
 
 def enlarge_image(image, target_size):
@@ -156,11 +195,11 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
             original_image = Image.open(input_path)
             denoised_image = denoise_image(original_image)
 
-            if palette_name!="original":
+            if palette_name=="nes" or len(palette)<32:
                 contrast_image = enhance_contrast(denoised_image)
-                small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size)
+                small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
             else:
-                small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+                small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
             
             if palette is not None:
                 small_image_with_palette = apply_palette(small_image, palette)
@@ -198,9 +237,9 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         
         if palette_name=="nes" or len(palette)<32:
             contrast_image = enhance_contrast(denoised_image)
-            small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size)
+            small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
         else:
-            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
        
             
         if palette is not None:
@@ -237,7 +276,9 @@ def process_images_cluster(input_folder, output_folder, palette_image_path, pale
             output_path = os.path.join(output_folder, output_filename)
             original_image = Image.open(input_path)
             denoised_image = denoise_image(original_image)
-            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+
+            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
+       
             
             imagen_indexada = indexar_colores(small_image, n_clusters)
             
@@ -274,7 +315,8 @@ def process_one_image_cluster(filename, output_folder, palette_image_path, palet
 
         denoised_image = denoise_image(original_image)
 
-        small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+        small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
+       
         imagen_indexada = indexar_colores(small_image, n_clusters)
 
         original_size = (original_image.width, original_image.height)
