@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageStat
 import os
 import argparse
 from sklearn.cluster import KMeans
@@ -10,10 +10,29 @@ def denoise_image(img):
     img_np = np.array(img.convert('RGBA'))
     rgb_np = img_np[..., :3]
     alpha_np = img_np[..., 3]
-    denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=2, sigmaColor=75, sigmaSpace=75)
+    denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=10, sigmaColor=75, sigmaSpace=75)
     denoised_img_np = np.dstack((denoised_rgb_np, alpha_np))
     denoised_img = Image.fromarray(denoised_img_np)
     return denoised_img
+
+def calculate_contrast(image):
+    grayscale = image.convert('L')
+    stat = ImageStat.Stat(grayscale)
+    contrast = stat.stddev[0]
+    return contrast
+
+def enhance_contrast(img, low_threshold=50, high_threshold=70, low_factor=2.0, high_factor=1.0):
+    contrast = calculate_contrast(img)
+    if contrast < low_threshold:
+        factor = low_factor
+    elif contrast > high_threshold:
+        factor = high_factor
+    else:
+        factor = low_factor - (low_factor - high_factor) * (contrast - low_threshold) / (high_threshold - low_threshold)
+
+    enhancer = ImageEnhance.Contrast(img)
+    enhanced_img = enhancer.enhance(factor)
+    return enhanced_img
 
 def indexar_colores(image, n_clusters):
     # Convertir la imagen a modo RGB si no lo está
@@ -67,8 +86,8 @@ def reduce_image(image, scale_factor=None, image_size=None):
     else:
         new_width, new_height = original_width, original_height
 
-    # Usar cv2.INTER_AREA para reducir la imagen
-    small_img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    # Usar cv2.INTER_NEAREST para reducir la imagen y preservar detalles
+    small_img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
     small_image = Image.fromarray(small_img)
     return small_image
 
@@ -136,7 +155,12 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
             output_path = os.path.join(output_folder, output_filename)
             original_image = Image.open(input_path)
             denoised_image = denoise_image(original_image)
-            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+
+            if palette_name!="original":
+                contrast_image = enhance_contrast(denoised_image)
+                small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size)
+            else:
+                small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
             
             if palette is not None:
                 small_image_with_palette = apply_palette(small_image, palette)
@@ -164,7 +188,6 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         palette = extract_palette(palette_image)
     else:
         palette = None
-    
     if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
         input_path = os.path.join(input_folder, filename)
         name, ext = os.path.splitext(os.path.basename(filename))
@@ -172,7 +195,13 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         output_path = os.path.join(output_folder, output_filename)
         original_image = Image.open(input_path)
         denoised_image = denoise_image(original_image)
-        small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+        
+        if palette_name!="original":
+            contrast_image = enhance_contrast(denoised_image)
+            small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size)
+        else:
+            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)
+       
             
         if palette is not None:
             small_image_with_palette = apply_palette(small_image, palette)
@@ -243,7 +272,6 @@ def process_one_image_cluster(filename, output_folder, palette_image_path, palet
         output_path = os.path.join(output_folder, output_filename)
         original_image = Image.open(input_path)
 
-        # Aplicar filtro de suavizado para reducir el ruido
         denoised_image = denoise_image(original_image)
 
         small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size)

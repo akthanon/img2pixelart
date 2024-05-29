@@ -225,11 +225,11 @@ update_index_slider_color()
 
 # Indexar Menu
 entry_index = tk.Entry(root, width=5)
-entry_index.insert(tk.END, "32")
+entry_index.insert(tk.END, "16")
 
-index_slider = tk.Scale(root, from_=0, to=128, orient="horizontal", resolution=4, length=200)
+index_slider = tk.Scale(root, from_=2, to=128, orient="horizontal", resolution=2, length=200)
 index_slider.grid(row=3, column=3)
-index_slider.set(32)
+index_slider.set(16)
 
 # Scale factor choice check buttons
 scale_factor_option = tk.IntVar()
