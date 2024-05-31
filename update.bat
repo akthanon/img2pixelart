@@ -2,7 +2,8 @@
 setlocal
 
 REM Ruta del directorio donde se descargará y descomprimirá el repositorio
-set REPO_DIR=%cd%
+set REPO_DIR=%cd%\img2pixelart
+echo %REPO_DIR%
 
 REM URL del repositorio de GitHub
 set GITHUB_REPO=https://github.com/calyseym/img2pixelart
@@ -34,7 +35,7 @@ echo Descomprimiendo el archivo...
 tar -xf %ZIP_FILE% > nul
 
 REM Mueve los archivos a la carpeta deseada
-move img2pixelart-main %REPO_DIR%
+move img2pixelart-main main_code
 
 REM Elimina el archivo zip descargado
 del %ZIP_FILE%
