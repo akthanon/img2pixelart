@@ -16,6 +16,9 @@ pip install opencv-python numpy Pillow scikit-learn scipy
 # Instalación
 Clona este repositorio o solo descarga el update
 
+# Opcional: Descarga la ultima versión estable del ejecutable.
+- 🌟 [Img2pixelart](https://drive.google.com/file/d/1R4-WBI9fNJC2opKGBmyQYuHLAZpukXa3/view?usp=drive_link)
+
 ## Uso
 Ejecuta la aplicación:
 
