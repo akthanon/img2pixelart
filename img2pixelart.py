@@ -8,6 +8,7 @@ from scipy.spatial import KDTree
 
 def bayer_dithering(image,intensity):
 
+    intensity=intensity/500
     # Matriz de Bayer 4x4
     bayer_matrix = np.array([
         [ 0,  8,  2, 10],
@@ -42,13 +43,16 @@ def bayer_dithering(image,intensity):
 
     return dithered_image
 
-def denoise_image(img):
+def denoise_image(img, intensity):
+    intensity=int(intensity/5)
     img_np = np.array(img.convert('RGBA'))
     rgb_np = img_np[..., :3]
     alpha_np = img_np[..., 3]
-    denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=10, sigmaColor=75, sigmaSpace=75)
+    denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=intensity, sigmaColor=75, sigmaSpace=75)
     denoised_img_np = np.dstack((denoised_rgb_np, alpha_np))
     denoised_img = Image.fromarray(denoised_img_np)
+    if intensity==-1:
+        denoised_img=img
     return denoised_img
 
 def calculate_contrast(image):
@@ -127,7 +131,9 @@ def reduce_image(image, scale_factor=None, image_size=None,intensity=0.1):
     small_image = Image.fromarray(small_img)
 
     # Ejemplo de uso
-    small_image = bayer_dithering(small_image,intensity=intensity)
+    if intensity>=0:
+        small_image = bayer_dithering(small_image,intensity)
+
     return small_image
 
 def enlarge_image(image, target_size):
@@ -176,7 +182,7 @@ def list_palettes(palette_folder):
     palettes = [os.path.splitext(p)[0] for p in palettes if p.endswith('.png')]
     return palettes
 
-def process_images(input_folder, output_folder, palette_image_path, palette_name, scale_factor, image_size):
+def process_images(input_folder, output_folder, palette_image_path, palette_name, scale_factor, image_size, denoise_intensity, dithering_intensity):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
@@ -195,13 +201,15 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
             output_filename = f"{palette_name}_{name}{ext}"
             output_path = os.path.join(output_folder, output_filename)
             original_image = Image.open(input_path)
-            denoised_image = denoise_image(original_image)
+
+            denoised_image = denoise_image(original_image, denoise_intensity)
 
             if palette_name=="nes" or (len_palette<32 and len_palette>0):
                 contrast_image = enhance_contrast(denoised_image)
-                small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
             else:
-                small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
+                contrast_image = denoised_image
+                
+            small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=dithering_intensity)
             
             if palette is not None:
                 small_image_with_palette = apply_palette(small_image, palette)
@@ -219,7 +227,8 @@ def process_images(input_folder, output_folder, palette_image_path, palette_name
             
             print(f'Processed {input_path} and saved to {final_output_path}')
 
-def process_one_image(filename, output_folder, palette_image_path, palette_name, scale_factor, image_size):
+def process_one_image(filename, output_folder, palette_image_path, palette_name, scale_factor, image_size, denoise_intensity, dithering_intensity):
+    
     input_folder=os.getcwd()
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -238,15 +247,16 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
         output_filename = f"{palette_name}_{name}{ext}"
         output_path = os.path.join(output_folder, output_filename)
         original_image = Image.open(input_path)
-        denoised_image = denoise_image(original_image)
-        
+
+        denoised_image = denoise_image(original_image, denoise_intensity)
+
         if palette_name=="nes" or (len_palette<32 and len_palette>0):
             contrast_image = enhance_contrast(denoised_image)
-            small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=0.15)
         else:
-            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
+            contrast_image = denoised_image
+
+        small_image = reduce_image(contrast_image, scale_factor=scale_factor, image_size=image_size, intensity=dithering_intensity)
        
-            
         if palette is not None:
             small_image_with_palette = apply_palette(small_image, palette)
         else:
@@ -263,7 +273,7 @@ def process_one_image(filename, output_folder, palette_image_path, palette_name,
             
         print(f'Processed {input_path} and saved to {final_output_path}')
 
-def process_images_cluster(input_folder, output_folder, palette_image_path, palette_name, scale_factor, image_size, n_clusters):
+def process_images_cluster(input_folder, output_folder, palette_image_path, palette_name, scale_factor, image_size, n_clusters, denoise_intensity, dithering_intensity):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     
@@ -280,10 +290,9 @@ def process_images_cluster(input_folder, output_folder, palette_image_path, pale
             output_filename = f"{palette_name}_{name}{ext}"
             output_path = os.path.join(output_folder, output_filename)
             original_image = Image.open(input_path)
-            denoised_image = denoise_image(original_image)
 
-            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
-       
+            denoised_image = denoise_image(original_image, denoise_intensity)
+            small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=dithering_intensity)
             
             imagen_indexada = indexar_colores(small_image, n_clusters)
             
@@ -300,7 +309,7 @@ def process_images_cluster(input_folder, output_folder, palette_image_path, pale
             
             print(f'Processed {input_path} and saved to {final_output_path}')
 
-def process_one_image_cluster(filename, output_folder, palette_image_path, palette_name, scale_factor, image_size, n_clusters):
+def process_one_image_cluster(filename, output_folder, palette_image_path, palette_name, scale_factor, image_size, n_clusters, denoise_intensity, dithering_intensity):
     input_folder = os.getcwd()
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -318,9 +327,8 @@ def process_one_image_cluster(filename, output_folder, palette_image_path, palet
         output_path = os.path.join(output_folder, output_filename)
         original_image = Image.open(input_path)
 
-        denoised_image = denoise_image(original_image)
-
-        small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=0.05)
+        denoised_image = denoise_image(original_image, denoise_intensity)
+        small_image = reduce_image(denoised_image, scale_factor=scale_factor, image_size=image_size, intensity=dithering_intensity)
        
         imagen_indexada = indexar_colores(small_image, n_clusters)
 
@@ -346,6 +354,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output_folder", help="Nombre de directorio de salida.")
     parser.add_argument("-i", "--input_image", help="Nombre del archivo de imagen.")
     parser.add_argument("-n", "--clusters_number", help="Numero de colores a indexar con clusters.")
+    parser.add_argument("-di", "--dithering", help="Dithering 0-100.")
+    parser.add_argument("-de", "--denoise", help="Denoise 0-100.")
 
     args = parser.parse_args()
 
@@ -357,6 +367,27 @@ if __name__ == "__main__":
             print(palette)
         exit()
 
+    if args.dithering is not None:
+        if not args.dithering.isnumeric():
+            parser.error("Introduzca un número del 0 al 100")
+        dithering_intensity=int(args.dithering)
+        if dithering_intensity>100:
+            dithering_intensity=100
+        elif dithering_intensity<0:
+            dithering_intensity=0
+    else:
+        dithering_intensity=-1
+
+    if args.denoise is not None:
+        if not args.denoise.isnumeric():
+            parser.error("Introduzca un número del 0 al 100")
+        denoise_intensity=int(args.denoise)
+        if denoise_intensity>100:
+            denoise_intensity=100
+        elif denoise_intensity<0:
+            denoise_intensity=0
+    else:
+        denoise_intensity=-1
 
     if args.scale_factor is not None and args.image_size is not None:
         parser.error("No se pueden usar ambos argumentos -f (factor de escala) y -s (tamaño de la imagen) al mismo tiempo.")
@@ -407,19 +438,19 @@ if __name__ == "__main__":
             clusters_number=int(args.clusters_number)
 
     if args.input_folder is not None and args.clusters_number is None:
-         process_images(input_folder, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size)
+         process_images(input_folder, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, denoise_intensity, dithering_intensity)
          print("COMPLETADO")
 
     if args.input_image is not None and args.clusters_number is None:
-        process_one_image(input_image, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size)
+        process_one_image(input_image, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, denoise_intensity, dithering_intensity)
         print("COMPLETADO")
 
     if args.input_folder is not None and args.clusters_number is not None:
-         process_images_cluster(input_folder, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, clusters_number)
+         process_images_cluster(input_folder, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, clusters_number, denoise_intensity, dithering_intensity)
          print("COMPLETADO")
 
     if args.input_image is not None and args.clusters_number is not None:
-        process_one_image_cluster(input_image, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, clusters_number)
+        process_one_image_cluster(input_image, output_folder, palette_image_path, palette_name, args.scale_factor, args.image_size, clusters_number, denoise_intensity, dithering_intensity)
         print("COMPLETADO")
 
 

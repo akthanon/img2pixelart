@@ -14,7 +14,6 @@ def update_index_slider_color():
         if index_slider is not None:  # Verificamos si index_slider ha sido creado
             index_slider.config(troughcolor="gray")
 
-
 def select_palette(palette_name):
     selected_palette.set(palette_name)
     toggle_index_option()
@@ -88,7 +87,7 @@ def process_images():
     if output_folder:
         command.extend(["-o", output_folder])
 
-    if palette_name and palette_name!="*clusterizar*":
+    if palette_name and palette_name != "*clusterizar*":
         command.extend(["-p", palette_name])
 
     if scale_factor_option.get() == 1:
@@ -107,6 +106,13 @@ def process_images():
     if index_slider is not None and index_slider.cget('state') != 'disabled':
         command.extend(["-n", index])
 
+    # Añadir argumentos para Dithering y Denoise si los Checkbuttons están seleccionados
+    if dithering_var.get() == 1:
+        command.extend(["-di", str(dithering_slider.get())])
+
+    if denoise_var.get() == 1:
+        command.extend(["-de", str(denoise_slider.get())])
+
     try:
         subprocess.run(command, check=True)
         messagebox.showinfo("Proceso terminado", "El procesamiento de imágenes ha finalizado correctamente.")
@@ -114,7 +120,6 @@ def process_images():
         messagebox.showerror("Error", f"Error al procesar las imágenes: {e}")
 
     # Change button text back to "Process Images" after processing is finished
-
     button_process.config(text="Process Images")
     root.update()
     print("Codigo Ejecutado:")
@@ -123,8 +128,6 @@ def process_images():
     print("")
     print("")
     print("En espera de la siguiente instrución...")
-
-
 
 def clear_input_text():
     if input_choice.get() == 1:
@@ -145,7 +148,6 @@ def toggle_input_option():
         button_input_folder.config(state="disabled")
         entry_input_image.config(state="normal")
         button_input_image.config(state="normal")
-
 
 def toggle_scale_factor_option():
     if scale_factor_option.get() == 1:
@@ -170,6 +172,18 @@ def toggle_index_option():
         if index_slider is not None:  # Verificamos si index_slider ha sido creado
             index_slider.config(troughcolor="gray")
             index_slider.config(state="disabled")
+
+def toggle_dithering_slider():
+    if dithering_var.get() == 1:
+        dithering_slider.config(state="normal")
+    else:
+        dithering_slider.config(state="disabled")
+
+def toggle_denoise_slider():
+    if denoise_var.get() == 1:
+        denoise_slider.config(state="normal")
+    else:
+        denoise_slider.config(state="disabled")
 
 root = tk.Tk()
 root.title("Pixel Art Converter")
@@ -265,9 +279,30 @@ image_size_slider = tk.Scale(root, from_=16, to=800, orient="horizontal", resolu
 image_size_slider.grid(row=5, column=3)
 image_size_slider.set(256)
 
+# Dithering Checkbutton y Slider
+dithering_var = tk.IntVar()
+dithering_var.set(1)
+
+dithering_checkbutton = tk.Checkbutton(root, text="Dithering", variable=dithering_var, command=toggle_dithering_slider)
+dithering_checkbutton.grid(row=6, column=0, sticky="w")
+
+dithering_slider = tk.Scale(root, from_=0, to=100, orient="horizontal", length=200)
+dithering_slider.grid(row=6, column=2)
+dithering_slider.set(30)
+
+# Denoise Checkbutton y Slider
+denoise_var = tk.IntVar()
+denoise_var.set(1)
+denoise_checkbutton = tk.Checkbutton(root, text="Denoise", variable=denoise_var, command=toggle_denoise_slider)
+denoise_checkbutton.grid(row=7, column=0, sticky="w")
+
+denoise_slider = tk.Scale(root, from_=0, to=100, orient="horizontal", length=200)
+denoise_slider.grid(row=7, column=2)
+denoise_slider.set(80)
+
 # Process button
 button_process = tk.Button(root, text="Process Images", command=process_images)
-button_process.grid(row=6, column=2)
+button_process.grid(row=8, column=2)
 
 toggle_input_option()  # Ensure initial state is correct
 toggle_scale_factor_option()  # Ensure initial state is correct
