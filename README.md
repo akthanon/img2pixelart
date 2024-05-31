@@ -1,6 +1,18 @@
 # img2pixelart INTERFAZ GRÁFICA
 Codigo para transformar imagenes comunes a pixelart
 
+# Requisitos
+Pip (o en su defecto las librerías solicitadas). 
+
+En caso de que no se tenga Pip, favor de instalar Curl o Wget.
+
+- Python 3.x
+- Bibliotecas Python: `cv2`, `numpy`, `PIL`, `scikit-learn`, `scipy`
+
+Puedes instalar las bibliotecas necesarias usando pip:
+
+pip install opencv-python numpy Pillow scikit-learn scipy
+
 # Instalación
 Clona este repositorio o solo descarga el update
 
@@ -36,19 +48,6 @@ Factor de Escala / Tamaño de la Imagen: Decide si quieres ajustar el tamaño de
 
 Este script convierte imágenes en arte de píxeles utilizando una paleta de colores predefinida. 
 
-## Requisitos
-
-# Requisitos
-Pip (o en su defecto las librerías solicitadas)
-En caso de que no se tenga Pip Curl o Wget
-
-- Python 3.x
-- Bibliotecas Python: `cv2`, `numpy`, `PIL`, `scikit-learn`, `scipy`
-
-Puedes instalar las bibliotecas necesarias usando pip:
-
-pip install opencv-python numpy Pillow scikit-learn scipy
-
 ## Uso
 
 ### Opciones
@@ -63,6 +62,8 @@ El script acepta las siguientes opciones de línea de comandos:
 - `-o, --output_folder`: Nombre del directorio de salida donde se guardarán las imágenes convertidas.
 - `-i, --input_image`: Nombre del archivo de imagen de entrada.
 - `-n, --clusters_number`: Numero de clusters para indexar la imagen.
+- `-di --dithering`: Dithering 0-100.
+- `-de --denoise`: Denoise 0-100.
 
 ### Ejemplos de Uso
 
