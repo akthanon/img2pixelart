@@ -2,7 +2,7 @@
 Codigo para transformar imagenes comunes a pixelart
 
 # Instalación
-Clona este repositorio
+Clona este repositorio o solo descarga el update
 
 ## Uso
 Ejecuta la aplicación:
@@ -37,6 +37,10 @@ Factor de Escala / Tamaño de la Imagen: Decide si quieres ajustar el tamaño de
 Este script convierte imágenes en arte de píxeles utilizando una paleta de colores predefinida. 
 
 ## Requisitos
+
+# Requisitos
+Pip (o en su defecto las librerías solicitadas)
+En caso de que no se tenga Pip Curl o Wget
 
 - Python 3.x
 - Bibliotecas Python: `cv2`, `numpy`, `PIL`, `scikit-learn`, `scipy`
