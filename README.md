@@ -77,7 +77,7 @@ python script.py -l
 
 Para convertir imágenes en un directorio a arte de píxeles:
 
-python script.py -i input_image.jpg -o output_image -p palette_name -s image_size
+python script.py -i input_image.jpg -o output_image -p palette_name -s image_size scikit-image
 
 
 ## Paletas Disponibles
