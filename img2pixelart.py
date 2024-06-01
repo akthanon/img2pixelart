@@ -5,6 +5,7 @@ import os
 import argparse
 from sklearn.cluster import KMeans
 from scipy.spatial import KDTree
+from skimage import color
 
 def bayer_dithering(image,intensity):
 
@@ -44,14 +45,15 @@ def bayer_dithering(image,intensity):
     return dithered_image
 
 def denoise_image(img, intensity):
-    intensity=int(intensity/5)
-    img_np = np.array(img.convert('RGBA'))
-    rgb_np = img_np[..., :3]
-    alpha_np = img_np[..., 3]
-    denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=intensity, sigmaColor=75, sigmaSpace=75)
-    denoised_img_np = np.dstack((denoised_rgb_np, alpha_np))
-    denoised_img = Image.fromarray(denoised_img_np)
-    if intensity==-1:
+    if intensity!=-1:
+        intensity=int(intensity/5)
+        img_np = np.array(img.convert('RGBA'))
+        rgb_np = img_np[..., :3]
+        alpha_np = img_np[..., 3]
+        denoised_rgb_np = cv2.bilateralFilter(rgb_np, d=intensity, sigmaColor=75, sigmaSpace=75)
+        denoised_img_np = np.dstack((denoised_rgb_np, alpha_np))
+        denoised_img = Image.fromarray(denoised_img_np)
+    else:
         denoised_img=img
     return denoised_img
 
@@ -75,36 +77,49 @@ def enhance_contrast(img, low_threshold=50, high_threshold=70, low_factor=2.0, h
     return enhanced_img
 
 def indexar_colores(image, n_clusters):
-    # Convertir la imagen a modo RGB si no lo está
+    # Asegúrate de que la imagen tenga solo 3 canales (RGB)
     if image.mode != 'RGB':
         image = image.convert('RGB')
 
-    # Convertir la imagen a una matriz numpy
+    # Convierte la imagen a una matriz numpy
     image_array = np.array(image)
 
+    # Elimina el cuarto canal si existe
+    if image_array.shape[2] == 4:
+        image_array = image_array[:, :, :3]
+
+    # Convertir la imagen a modo LAB
+    lab_image = color.rgb2lab(image_array)
+
     # Obtener la forma de la matriz de la imagen
-    height, width, channels = image_array.shape
+    height, width, _ = lab_image.shape
 
     # Redimensionar la matriz a una forma plana para que cada píxel se represente como un vector de características
-    flattened_image_array = image_array.reshape((height * width, channels))
+    flattened_lab_image = lab_image.reshape((height * width, 3))
 
     # Inicializar el modelo KMeans con el número de clusters especificado
     kmeans = KMeans(n_clusters=n_clusters, random_state=0)
 
     # Ajustar el modelo a los datos de la imagen
-    kmeans.fit(flattened_image_array)
+    kmeans.fit(flattened_lab_image)
 
     # Obtener las etiquetas de los clústeres para cada píxel
-    labels = kmeans.predict(flattened_image_array)
+    labels = kmeans.predict(flattened_lab_image)
 
     # Asignar los colores de los clústeres a cada píxel en la imagen
-    clustered_image = kmeans.cluster_centers_[labels]
+    clustered_lab_image = kmeans.cluster_centers_[labels]
 
     # Reformar la imagen para que tenga la misma forma que la imagen original
-    clustered_image = clustered_image.reshape((height, width, channels))
+    clustered_lab_image = clustered_lab_image.reshape((height, width, 3))
+
+    # Convertir la imagen LAB de vuelta a RGB
+    clustered_rgb_image = color.lab2rgb(clustered_lab_image)
+
+    # Escalar los valores de píxel de vuelta al rango [0, 255]
+    clustered_rgb_image = (clustered_rgb_image * 255).astype(np.uint8)
 
     # Convertir la matriz numpy de vuelta a una imagen de PIL
-    clustered_image = Image.fromarray(clustered_image.astype('uint8'), 'RGB')
+    clustered_image = Image.fromarray(clustered_rgb_image)
 
     return clustered_image
 

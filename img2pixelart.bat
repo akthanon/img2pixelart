@@ -58,6 +58,12 @@ if %errorlevel% neq 0 (
     %PYTHON_EXECUTABLE% -m pip install scikit-learn
 )
 
+%PYTHON_EXECUTABLE% -c "import skimage" >nul 2>&1
+if %errorlevel% neq 0 (
+    echo scikit-image no está instalado. Instalando scikit-image...
+    %PYTHON_EXECUTABLE% -m pip install scikit-image
+)
+
 rem Verificar si el programa principal está presente
 if not exist gui_img2pixelart.py (
     echo El archivo gui_img2pixelart.py no está presente en el directorio actual. Por favor, asegúrese de que el archivo esté presente y vuelva a ejecutar este script.

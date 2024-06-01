@@ -298,7 +298,7 @@ denoise_checkbutton.grid(row=7, column=0, sticky="w")
 
 denoise_slider = tk.Scale(root, from_=0, to=100, orient="horizontal", length=200)
 denoise_slider.grid(row=7, column=2)
-denoise_slider.set(80)
+denoise_slider.set(50)
 
 # Process button
 button_process = tk.Button(root, text="Process Images", command=process_images)
